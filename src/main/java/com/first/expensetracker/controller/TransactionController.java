@@ -13,6 +13,14 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
+class HomeController {
+    @GetMapping("/")
+    public String home() {
+        return "API do Expense Tracker está Online! 🚀";
+    }
+}
+
+@RestController
 @RequestMapping("/api/v1/transactions")
 @CrossOrigin(origins = "*")
 public class TransactionController {
@@ -34,6 +42,7 @@ public class TransactionController {
         List<TransactionResponse> response = transactionService.listAllTransactions();
         return ResponseEntity.ok(response);
     }
+
 
     @GetMapping("/{id}")
     public ResponseEntity<TransactionResponse> getTransactionById(@PathVariable UUID id) {

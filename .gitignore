@@ -35,3 +35,4 @@ build/
 application.properties
 application.yml
 V1__init_schema.sql
+src/main/resources/application-dev.yml

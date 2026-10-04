@@ -1,21 +1,19 @@
+server:
+  port: 8081
+
 spring:
   datasource:
-
-    url: jdbc:postgresql://aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?sslmode=require
-
-
-    username: postgres.zpdqzuaifderypebuqwo
-
-
-    password: 3xp3ns3-tr4ck3r
-
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     show-sql: true
 
   flyway:
     enabled: true
+    baseline-on-migrate: true
     locations: classpath:db/migration

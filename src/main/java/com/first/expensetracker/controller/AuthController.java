@@ -1,6 +1,7 @@
 package com.first.expensetracker.controller;
 
 import com.first.expensetracker.model.User;
+import com.first.expensetracker.security.JwtTokenUtil;
 import com.first.expensetracker.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,9 +15,11 @@ import java.util.UUID;
 @CrossOrigin(origins = "*")
 public class AuthController {
     private final UserService userService;
+    private final JwtTokenUtil jwtTokenUtil;
 
-    public AuthController(UserService userService) {
+    public AuthController(UserService userService, JwtTokenUtil jwtTokenUtil) {
         this.userService = userService;
+        this.jwtTokenUtil = jwtTokenUtil;
     }
 
     @PostMapping("/signup")
@@ -45,14 +48,25 @@ public class AuthController {
                         "id", user.getId(),
                         "email", user.getEmail(),
                         "budget", user.getMonthlyBudget(),
-                        "token", "mock-jwt-token-" + user.getId()
+                        "token", jwtTokenUtil.generateToken(user.getId())
                 )))
                 .orElse(ResponseEntity.status(401).body(Map.of("error", "Invalid credentials")));
     }
 
     @PatchMapping("/budget")
-    public ResponseEntity<?> updateBudget(@RequestParam UUID userId, @RequestParam BigDecimal amount) {
+    public ResponseEntity<?> updateBudget(@RequestHeader("Authorization") String authHeader, @RequestParam BigDecimal amount) {
         try {
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return ResponseEntity.status(401).body(Map.of("error", "Missing token"));
+            }
+
+            String token = authHeader.substring(7);
+            UUID userId = jwtTokenUtil.validateTokenAndGetUserId(token);
+
+            if (userId == null) {
+                return ResponseEntity.status(401).body(Map.of("error", "Invalid token"));
+            }
+
             User user = userService.updateBudget(userId, amount);
             return ResponseEntity.ok(Map.of("message", "Budget updated", "newBudget", user.getMonthlyBudget()));
         } catch (Exception e) {

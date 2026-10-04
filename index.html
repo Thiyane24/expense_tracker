@@ -308,9 +308,11 @@
                 const res = await fetch(`${API_BASE_URL}/transactions`, {
                     headers: { 'Authorization': `Bearer ${state.token}` }
                 });
+                if (!res.ok) throw new Error('Erro ao carregar transações');
                 state.transactions = await res.json();
             } catch (err) {
-                // Fallback for demo purposes
+                console.error('Erro na requisição:', err);
+                // Fallback for demo purposes, but now with a user notification
                 state.transactions = [
                     { id: 1, description: 'Almoço Trabalho', amount: 15.00, category: 'Alimentação', date: '2023-10-20' },
                     { id: 2, description: 'Uber', amount: 12.50, category: 'Transporte', date: '2023-10-21' },
@@ -326,8 +328,10 @@
         }
 
         function updateBudgetUI() {
-            const percent = (state.spentAmount / state.budgetLimit) * 100;
-            const available = state.budgetLimit - state.spentAmount;
+            // Guard clause to prevent NaN or Infinity if budgetLimit is 0 or undefined
+            const budget = state.budgetLimit && state.budgetLimit > 0 ? state.budgetLimit : 0;
+            const percent = budget > 0 ? (state.spentAmount / budget) * 100 : 0;
+            const available = budget - state.spentAmount;
 
             ui.budgetTotal.innerText = available.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             ui.budgetBar.style.width = `${Math.min(percent, 100)}%`;

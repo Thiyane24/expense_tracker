@@ -2,18 +2,19 @@ package com.first.expensetracker.service;
 
 import com.first.expensetracker.model.User;
 import com.first.expensetracker.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.util.Optional;
 import java.util.UUID;
 import java.math.BigDecimal;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
-
-    public UserService(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
+    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public User registerUser(String email, String password) {
         if (userRepository.findByEmail(email).isPresent()) {
@@ -22,7 +23,7 @@ public class UserService {
 
         User user = new User();
         user.setEmail(email);
-        user.setPassword(password); // In a real app, hash this!
+        user.setPassword(passwordEncoder.encode(password)); // Hash password
         user.setMonthlyBudget(BigDecimal.ZERO);
 
         return userRepository.save(user);
@@ -30,7 +31,7 @@ public class UserService {
 
     public Optional<User> login(String email, String password) {
         return userRepository.findByEmail(email)
-                .filter(user -> user.getPassword().equals(password));
+                .filter(user -> passwordEncoder.matches(password, user.getPassword()));
     }
 
     public User getUserById(UUID id) {

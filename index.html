@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker - Gestão Financeira</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #ffffff; color: #1c1917; }
+        .input-field {
+            border-bottom: 1px solid #e7e5e4;
+            transition: border-color 0.2s;
+        }
+        .input-field:focus {
+            border-bottom-color: #c2410c;
+            outline: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- AUTH SCREEN (Login & Signup) -->
+    <div id="auth-screen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white transition-all duration-500">
+        <div class="max-w-sm w-full p-8">
+            <div id="auth-header" class="mb-10 text-center">
+                <h1 id="auth-title" class="text-3xl font-light tracking-tight text-stone-900">Entrar</h1>
+                <p id="auth-subtitle" class="text-stone-500 text-sm mt-2">Aceda à sua conta financeira</p>
+            </div>
+
+            <form id="auth-form" class="space-y-6">
+                <div id="signup-fields" class="hidden">
+                    <div class="mb-6">
+                        <input type="text" id="auth-name" placeholder="Nome Completo"
+                            class="w-full py-3 px-0 bg-transparent border-b border-stone-200 input-field placeholder:text-stone-300">
+                    </div>
+                </div>
+                <div>
+                    <input type="email" id="auth-email" placeholder="E-mail"
+                        class="w-full py-3 px-0 bg-transparent border-b border-stone-200 input-field placeholder:text-stone-300" required>
+                </div>
+                <div>
+                    <input type="password" id="auth-password" placeholder="Senha"
+                        class="w-full py-3 px-0 bg-transparent border-b border-stone-200 input-field placeholder:text-stone-300" required>
+                </div>
+                <button type="submit" id="auth-submit-btn"
+                    class="w-full py-4 bg-stone-900 hover:bg-stone-800 text-white rounded-lg font-medium transition-all active:scale-95">
+                    Entrar
+                </button>
+            </form>
+
+            <div class="mt-8 text-center">
+                <button id="toggle-auth" class="text-sm text-stone-500 hover:text-stone-900 transition-colors">
+                    Não tem conta? Crie uma agora
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <div id="app-screen" class="hidden transition-all duration-500">
+        <nav class="border-b border-stone-100 px-6 py-5 flex justify-between items-center bg-white">
+            <span class="font-medium text-stone-900 tracking-tight">ExpenseTracker</span>
+            <div class="flex items-center gap-6">
+                <select id="currency-selector" class="bg-transparent text-sm text-stone-500 outline-none cursor-pointer hover:text-stone-800 transition-colors">
+                    <option value="MYR">MYR (Ringgit)</option>
+                    <option value="MZN">MZN (Metical)</option>
+                </select>
+                <button id="logout-btn" class="text-stone-400 hover:text-stone-900 transition-colors text-sm font-medium">Sair</button>
+            </div>
+        </nav>
+
+        <main class="max-w-6xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-12">
+
+            <!-- Entry Column -->
+            <div class="lg:col-span-4 space-y-10">
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-xs font-semibold text-stone-400 uppercase tracking-widest">Saldo Disponível</h2>
+                        <button id="edit-budget-btn" class="text-[10px] text-stone-400 hover:text-stone-900 underline uppercase">Editar Limite</button>
+                    </div>
+                    <div class="flex items-baseline gap-2">
+                        <span id="budget-total" class="text-4xl font-light text-stone-900">0,00</span>
+                        <span class="currency-label text-stone-400 font-medium">MYR</span>
+                    </div>
+                    <div class="h-1 w-full bg-stone-100 rounded-full overflow-hidden mt-4">
+                        <div id="budget-bar" class="h-full transition-all duration-700 bg-stone-900" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <h2 class="text-xs font-semibold text-stone-400 uppercase tracking-widest">Novo Gasto</h2>
+                    <form id="expense-form" class="space-y-6">
+                        <div class="relative">
+                            <input type="number" id="amount" step="0.01" placeholder="Valor"
+                                class="w-full text-2xl font-light py-3 px-0 bg-transparent border-b border-stone-200 input-field placeholder:text-stone-300" required>
+                        </div>
+                        <input type="text" id="description" placeholder="Descrição da despesa"
+                            class="w-full py-3 px-0 bg-transparent border-b border-stone-200 input-field placeholder:text-stone-300" required>
+
+                        <select id="category" class="w-full py-3 px-0 bg-transparent border-b border-stone-200 input-field text-stone-600 outline-none cursor-pointer">
+                            <option value="Alimentação">Alimentação</option>
+                            <option value="Transporte">Transporte</option>
+                            <option value="Lazer">Lazer</option>
+                            <option value="Saúde">Saúde</option>
+                            <option value="Outros">Outros</option>
+                        </select>
+
+                        <button type="submit" id="submit-btn"
+                            class="w-full py-4 bg-stone-900 hover:bg-stone-800 text-white rounded-lg font-medium transition-all active:scale-95">
+                            <span id="btn-text">Adicionar Gasto</span>
+                        </button>
+                        <div id="error-msg" class="hidden text-center text-red-500 text-xs">
+                            Preencha todos os campos corretamente.
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- History Column -->
+            <div class="lg:col-span-8">
+                <div class="flex justify-between items-center mb-8">
+                    <div class="flex items-center gap-4">
+                        <h2 class="text-xl font-light text-stone-900">Histórico Detalhado</h2>
+                        <input type="text" id="search-tx" placeholder="Pesquisar..."
+                            class="text-xs py-1 px-2 bg-stone-50 border border-stone-100 rounded-md outline-none focus:border-stone-300 transition-all">
+                    </div>
+                    <span class="text-xs text-stone-400" id="tx-count">0 transações</span>
+                </div>
+
+                <div id="transactions-list" class="divide-y divide-stone-100">
+                    <!-- Transactions injected here -->
+                </div>
+
+                <div id="empty-state" class="hidden py-20 text-center">
+                    <p class="text-stone-400 font-light">Nenhum gasto registado.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- BUDGET MODAL -->
+    <div id="budget-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-white/80 backdrop-blur-sm">
+        <div class="max-w-sm w-full p-8 bg-white border border-stone-200 rounded-2xl shadow-xl">
+            <h3 class="text-lg font-light text-stone-900 mb-6">Definir Orçamento Mensal</h3>
+            <div class="flex gap-3">
+                <input type="number" id="new-budget-amount" placeholder="0,00"
+                    class="flex-1 py-3 px-0 bg-transparent border-b border-stone-200 input-field text-xl font-light outline-none">
+                <button id="save-budget-btn" class="px-6 py-3 bg-stone-900 text-white rounded-lg text-sm font-medium transition-all active:scale-95">Guardar</button>
+                <button id="close-budget-btn" class="px-6 py-3 text-stone-400 hover:text-stone-900 text-sm font-medium">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://expensetracker1-e54cc47539ed.herokuapp.com/api';
+
+        const state = {
+            user: null,
+            token: localStorage.getItem('token') || null,
+            currency: 'MYR',
+            budgetLimit: 5000,
+            spentAmount: 0,
+            transactions: []
+        };
+
+        const screens = { auth: document.getElementById('auth-screen'), app: document.getElementById('app-screen') };
+        const forms = { auth: document.getElementById('auth-form'), expense: document.getElementById('expense-form') };
+        const ui = {
+            budgetTotal: document.getElementById('budget-total'),
+            budgetBar: document.getElementById('budget-bar'),
+            transactionsList: document.getElementById('transactions-list'),
+            emptyState: document.getElementById('empty-state'),
+            submitBtn: document.getElementById('submit-btn'),
+            btnText: document.getElementById('btn-text'),
+            errorMsg: document.getElementById('error-msg'),
+            currencyLabels: document.querySelectorAll('.currency-label'),
+            txCount: document.getElementById('tx-count'),
+            authTitle: document.getElementById('auth-title'),
+            authSubtitle: document.getElementById('auth-subtitle'),
+            authSubmitBtn: document.getElementById('auth-submit-btn'),
+            signupFields: document.getElementById('signup-fields')
+        };
+
+        let isLoginMode = true;
+
+        async function toggleAuthMode() {
+            isLoginMode = !isLoginMode;
+            ui.authTitle.innerText = isLoginMode ? 'Entrar' : 'Criar Conta';
+            ui.authSubtitle.innerText = isLoginMode ? 'Aceda à sua conta financeira' : 'Comece a gerir as suas despesas';
+            ui.authSubmitBtn.innerText = isLoginMode ? 'Entrar' : 'Registar';
+            ui.signupFields.classList.toggle('hidden');
+            document.getElementById('toggle-auth').innerText = isLoginMode ? 'Não tem conta? Crie uma agora' : 'Já tem conta? Faça login';
+        }
+
+        async function handleAuth(e) {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+            const endpoint = isLoginMode ? '/auth/login' : '/auth/signup';
+
+            try {
+                const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Erro na autenticação');
+
+                if (isLoginMode) {
+                    localStorage.setItem('token', data.token);
+                    state.token = data.token;
+                    state.user = { id: data.id, email: data.email, budget: data.budget };
+                    state.budgetLimit = data.budget || 5000;
+                } else {
+                    alert('Conta criada com sucesso! Por favor, faça login.');
+                    toggleAuthMode();
+                }
+
+                if (isLoginMode) showApp();
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('token');
+            state.token = null;
+            state.user = null;
+            showLogin();
+        }
+
+        function showApp() {
+            screens.auth.classList.add('hidden');
+            screens.app.classList.remove('hidden');
+            initApp();
+        }
+
+        function showLogin() {
+            screens.app.classList.add('hidden');
+            screens.auth.classList.remove('hidden');
+        }
+
+        async function initApp() {
+            updateBudgetUI();
+            await fetchTransactions();
+        }
+
+        async function fetchTransactions() {
+            try {
+                const res = await fetch(`${API_BASE_URL}/transactions`, {
+                    headers: { 'Authorization': `Bearer ${state.token}` }
+                });
+                state.transactions = await res.json();
+            } catch (err) {
+                // Fallback for demo purposes
+                state.transactions = [
+                    { id: 1, description: 'Almoço Trabalho', amount: 15.00, category: 'Alimentação', date: '2023-10-20' },
+                    { id: 2, description: 'Uber', amount: 12.50, category: 'Transporte', date: '2023-10-21' },
+                ];
+            }
+            calculateTotals();
+            renderTransactions();
+        }
+
+        function calculateTotals() {
+            state.spentAmount = state.transactions.reduce((acc, t) => acc + t.amount, 0);
+            updateBudgetUI();
+        }
+
+        function updateBudgetUI() {
+            const percent = (state.spentAmount / state.budgetLimit) * 100;
+            const available = state.budgetLimit - state.spentAmount;
+
+            ui.budgetTotal.innerText = available.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            ui.budgetBar.style.width = `${Math.min(percent, 100)}%`;
+            ui.currencyLabels.forEach(el => el.innerText = state.currency);
+        }
+
+        function renderTransactions(filter = '') {
+            const filtered = state.transactions.filter(t =>
+                t.description.toLowerCase().includes(filter.toLowerCase())
+            );
+
+            ui.txCount.innerText = `${filtered.length} transações`;
+            if (filtered.length === 0) {
+                ui.emptyState.classList.remove('hidden');
+                ui.transactionsList.innerHTML = '';
+                return;
+            }
+
+            ui.emptyState.classList.add('hidden');
+            ui.transactionsList.innerHTML = filtered.map(t => `
+                <div class="py-5 flex justify-between items-center group">
+                    <div class="flex flex-col">
+                        <span class="text-sm font-medium text-stone-800">${t.description}</span>
+                        <span class="text-xs text-stone-400">${t.date} • ${t.category}</span>
+                    </div>
+                    <div class="flex items-center gap-6">
+                        <span class="text-sm font-medium text-stone-900">
+                            - ${t.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })} ${state.currency}
+                        </span>
+                        <button onclick="deleteTransaction(${t.id})" class="text-xs text-stone-300 hover:text-red-500 transition-colors">Remover</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function handleExpenseSubmit(e) {
+            e.preventDefault();
+            const amount = parseFloat(document.getElementById('amount').value);
+            const description = document.getElementById('description').value;
+            const category = document.getElementById('category').value;
+
+            ui.errorMsg.classList.add('hidden');
+            ui.submitBtn.disabled = true;
+            ui.btnText.innerText = 'A processar...';
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/transactions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${state.token}`
+                    },
+                    body: JSON.stringify({ amount, description, category })
+                });
+                const newTx = await res.json();
+
+                state.transactions.unshift(newTx);
+                calculateTotals();
+                renderTransactions();
+
+                ui.btnText.innerText = 'Sucesso!';
+                ui.submitBtn.classList.replace('bg-stone-900', 'bg-green-600');
+
+                setTimeout(() => {
+                    ui.btnText.innerText = 'Adicionar Gasto';
+                    ui.submitBtn.classList.replace('bg-green-600', 'bg-stone-900');
+                    ui.submitBtn.disabled = false;
+                    forms.expense.reset();
+                }, 1500);
+
+            } catch (err) {
+                ui.errorMsg.classList.remove('hidden');
+                ui.submitBtn.disabled = false;
+                ui.btnText.innerText = 'Erro ao salvar';
+            }
+        }
+
+        window.deleteTransaction = async (id) => {
+            try {
+                await fetch(`${API_BASE_URL}/transactions/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${state.token}` }
+                });
+                state.transactions = state.transactions.filter(t => t.id !== id);
+                calculateTotals();
+                renderTransactions();
+            } catch (err) {
+                alert('Erro ao remover transação');
+            }
+        };
+
+        // Budget Modal Logic
+        document.getElementById('edit-budget-btn').onclick = () => {
+            document.getElementById('budget-modal').classList.remove('hidden');
+        };
+        document.getElementById('close-budget-btn').onclick = () => {
+            document.getElementById('budget-modal').classList.add('hidden');
+        };
+        document.getElementById('save-budget-btn').onclick = async () => {
+            const amount = document.getElementById('new-budget-amount').value;
+            if (!amount) return;
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/auth/budget`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${state.token}`
+                    },
+                    body: JSON.stringify({ userId: state.user?.id, amount: amount })
+                });
+                const data = await res.json();
+                state.budgetLimit = parseFloat(data.newBudget);
+                updateBudgetUI();
+                document.getElementById('budget-modal').classList.add('hidden');
+            } catch (err) {
+                alert('Erro ao atualizar orçamento');
+            }
+        };
+
+        // Eventos
+        document.getElementById('toggle-auth').onclick = toggleAuthMode;
+        forms.auth.onsubmit = handleAuth;
+        forms.expense.onsubmit = handleExpenseSubmit;
+        document.getElementById('logout-btn').onclick = handleLogout;
+        document.getElementById('currency-selector').onchange = (e) => {
+            state.currency = e.target.value;
+            updateBudgetUI();
+            renderTransactions();
+        };
+        document.getElementById('search-tx').oninput = (e) => {
+            renderTransactions(e.target.value);
+        };
+
+        if (state.token) showApp(); else showLogin();
+    </script>
+</body>
+</html>

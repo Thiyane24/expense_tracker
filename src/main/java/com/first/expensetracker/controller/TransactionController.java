@@ -21,7 +21,7 @@ class HomeController {
 }
 
 @RestController
-@RequestMapping("/api/v1/transactions")
+@RequestMapping("/api/transactions")
 @CrossOrigin(origins = "*")
 public class TransactionController {
     @Autowired

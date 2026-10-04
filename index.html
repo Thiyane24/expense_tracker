@@ -155,6 +155,9 @@
     <script>
         const API_BASE_URL = 'https://expensetracker1-e54cc47539ed.herokuapp.com/api';
 
+        // Log de debug para ajudar a identificar o erro no console do navegador (F12)
+        console.log('App iniciado. Conectando a:', API_BASE_URL);
+
         const state = {
             user: null,
             token: localStorage.getItem('token') || null,

@@ -2,25 +2,28 @@ package com.first.expensetracker.service;
 
 import com.first.expensetracker.model.User;
 import com.first.expensetracker.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.util.Optional;
 import java.util.UUID;
+import java.math.BigDecimal;
 
 @Service
-@RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+
+    public UserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     public User registerUser(String email, String password) {
         if (userRepository.findByEmail(email).isPresent()) {
             throw new RuntimeException("Email already registered");
         }
 
-        User user = User.builder()
-                .email(email)
-                .password(password) // In a real app, hash this!
-                .build();
+        User user = new User();
+        user.setEmail(email);
+        user.setPassword(password); // In a real app, hash this!
+        user.setMonthlyBudget(BigDecimal.ZERO);
 
         return userRepository.save(user);
     }
@@ -35,7 +38,7 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
-    public User updateBudget(UUID userId, java.math.BigDecimal newBudget) {
+    public User updateBudget(UUID userId, BigDecimal newBudget) {
         User user = getUserById(userId);
         user.setMonthlyBudget(newBudget);
         return userRepository.save(user);

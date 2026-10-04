@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+application.properties
+application.yml
+V1__init_schema.sql

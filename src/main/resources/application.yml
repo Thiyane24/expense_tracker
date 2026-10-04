@@ -1,17 +1,20 @@
 spring:
   datasource:
-    url: jdbc:postgresql://postgres.zpdqzuaifderypebuqwo:3xp3ns3-tr4ck3r@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
-    username: postgres
-    password: sua_senha_aqui
+
+    url: jdbc:postgresql://aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?sslmode=require
+
+
+    username: postgres.zpdqzuaifderypebuqwo
+
+
+    password: 3xp3ns3-tr4ck3r
+
     driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
-      ddl-auto: validate # Deixa o Flyway cuidar de criar as tabelas
+      ddl-auto: validate
     show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
 
   flyway:
     enabled: true

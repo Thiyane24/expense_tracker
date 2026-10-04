@@ -11,10 +11,14 @@ import java.util.UUID;
 import java.math.BigDecimal;
 
 @Service
-@RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final PasswordEncoder passwordEncoder;
+
+    public UserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = new BCryptPasswordEncoder();
+    }
 
     public User registerUser(String email, String password) {
         if (userRepository.findByEmail(email).isPresent()) {

@@ -69,7 +69,7 @@ public class AuthController {
 
             User user = userService.getUserById(userId);
             return ResponseEntity.ok(Map.of(
-                "user", Map.of("name", user.getName()),
+                "user", Map.of("name", user.getEmail()),
                 "budget", user.getMonthlyBudget()
             ));
         } catch (Exception e) {

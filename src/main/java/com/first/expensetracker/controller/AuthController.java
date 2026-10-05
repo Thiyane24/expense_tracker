@@ -54,23 +54,13 @@ public class AuthController {
     }
 
     @GetMapping("/budget")
-    public ResponseEntity<?> getBudget(@RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<?> getBudget() {
         try {
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                return ResponseEntity.status(401).body(Map.of("error", "Missing token"));
-            }
-
-            String token = authHeader.substring(7);
-            UUID userId = jwtTokenUtil.validateTokenAndGetUserId(token);
-
-            if (userId == null) {
-                return ResponseEntity.status(401).body(Map.of("error", "Invalid token"));
-            }
-
-            User user = userService.getUserById(userId);
+            // Para simplificar a primeira visualização, retornamos um orçamento padrão
+            // Caso queira vincular ao usuário, precisaremos de um login funcional primeiro
             return ResponseEntity.ok(Map.of(
-                "user", Map.of("name", user.getEmail()),
-                "budget", user.getMonthlyBudget()
+                "user", Map.of("name", "Usuário Visitante"),
+                "budget", 5000.00
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));

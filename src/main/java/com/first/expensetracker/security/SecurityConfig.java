@@ -21,21 +21,20 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // 1. Desativar CSRF (necessário para APIs REST)
+            // 1. Desativar CSRF completamente
             .csrf(AbstractHttpConfigurer::disable)
 
-            // 2. Configurar CORS
+            // 2. Forçar a configuração de CORS global
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-            // 3. Definir as regras de acesso
+            // 3. Liberar TODAS as rotas da API para teste inicial
+            // Isso remove qualquer erro 403 de autenticação
             .authorizeHttpRequests(auth -> auth
-                // Liberar rotas de autenticação, home, transações e orçamento para teste
-                .requestMatchers("/api/auth/**", "/api/transactions/**", "/").permitAll()
-                // Todas as outras rotas exigem autenticação
-                .anyRequest().authenticated()
+                .requestMatchers("/api/**", "/").permitAll()
+                .anyRequest().permitAll()
             )
 
-            // 4. Tornar a sessão STATELESS (Sem estado)
+            // 4. Sessão Stateless
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             );
@@ -46,10 +45,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("*"));
+        // Permitir qualquer origem (GitHub Pages, Localhost, etc.)
+        configuration.setAllowedOriginPatterns(List.of("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(false);
+        configuration.setAllowCredentials(true); // Importante para alguns navegadores
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

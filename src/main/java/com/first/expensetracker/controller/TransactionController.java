@@ -24,7 +24,6 @@ class HomeController {
 @RequestMapping("/api/transactions")
 @CrossOrigin(origins = "*")
 public class TransactionController {
-    @Autowired
     private final TransactionService transactionService;
 
     public TransactionController(TransactionService transactionService) {

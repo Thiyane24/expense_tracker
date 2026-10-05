@@ -1,24 +1,11 @@
 package com.first.expensetracker.controller;
 
-import com.first.expensetracker.dto.request.TransactionRequest;
-import com.first.expensetracker.dto.request.response.TransactionResponse;
 import com.first.expensetracker.service.TransactionService;
-import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.UUID;
-
-@RestController
-class HomeController {
-    @GetMapping("/")
-    public String home() {
-        return "API do Expense Tracker está Online! 🚀";
-    }
-}
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/transactions")
@@ -31,28 +18,18 @@ public class TransactionController {
     }
 
     @PostMapping
-    public ResponseEntity<TransactionResponse> criarDespesa(@Valid @RequestBody TransactionRequest request) {
-        TransactionResponse response = transactionService.registrarDespesa(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    public ResponseEntity<?> criarDespesa(@RequestBody Map<String, Object> request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(transactionService.registrarDespesa(request));
     }
 
     @GetMapping
-    public ResponseEntity<List<TransactionResponse>> getAllTransactions() {
-        List<TransactionResponse> response = transactionService.listAllTransactions();
-        return ResponseEntity.ok(response);
-    }
-
-
-    @GetMapping("/{id}")
-    public ResponseEntity<TransactionResponse> getTransactionById(@PathVariable UUID id) {
-        TransactionResponse response = transactionService.getTransactionById(id);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<?> getAllTransactions() {
+        return ResponseEntity.ok(transactionService.listAllTransactions());
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<TransactionResponse> updateTransaction(@PathVariable UUID id, @Valid @RequestBody TransactionRequest request) {
-        TransactionResponse response = transactionService.updateTransaction(id, request);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<?> updateTransaction(@PathVariable UUID id, @RequestBody Map<String, Object> request) {
+        return ResponseEntity.ok(transactionService.updateTransaction(id, request));
     }
 
     @DeleteMapping("/{id}")

@@ -1,6 +1,6 @@
 /**
- * ExpenseTracker Vanilla JS
- * Architecture: State-driven DOM manipulation with JWT Auth
+ * ExpenseTracker Vanilla JS - PRO Version
+ * Architecture: State-driven DOM manipulation with JWT Auth and UX enhancements
  */
 
 const CONFIG = {
@@ -15,6 +15,7 @@ const state = {
     budgetLimit: 0,
     spentAmount: 0,
     transactions: [],
+    filteredTransactions: [],
     isLoginMode: true
 };
 
@@ -25,12 +26,14 @@ const elements = {
     errorMessage: document.getElementById('error-message'),
     balance: document.getElementById('balance'),
     budgetLimit: document.getElementById('budget-limit'),
+    budgetPercent: document.getElementById('budget-percent'),
     progressBar: document.getElementById('progress-bar'),
     transactionsList: document.getElementById('transactions-list'),
     emptyState: document.getElementById('empty-state'),
     expenseForm: document.getElementById('expense-form'),
     userStatus: document.getElementById('user-status'),
     submitBtn: document.getElementById('submit-btn'),
+    searchTx: document.getElementById('search-tx'),
 
     // Auth elements
     authScreen: document.getElementById('auth-screen'),
@@ -64,34 +67,30 @@ function closeError() {
  */
 async function apiRequest(endpoint, options = {}) {
     const url = `${CONFIG.API_BASE_URL}${endpoint}`;
-
     const headers = {
         'Content-Type': 'application/json',
         ...options.headers
     };
 
-    // Automatically add JWT token if available
     if (state.token) {
         headers['Authorization'] = `Bearer ${state.token}`;
     }
 
     try {
         const response = await fetch(url, { ...options, headers });
-
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             if (response.status === 401) {
                 handleLogout();
-                throw new Error('Sessão expirada. Por favor, faça login novamente.');
+                throw new Error('Sessão expirada. Faça login novamente.');
             }
             throw new Error(errorData.error || `Erro do servidor: ${response.status}`);
         }
-
         return await response.json();
     } catch (err) {
         const isNetworkError = err instanceof TypeError;
         const message = isNetworkError
-            ? 'Não foi possível ligar ao servidor de dados (Verifique se o backend está online)'
+            ? 'Erro de conexão com o servidor.'
             : err.message;
         notifyError(message);
         throw err;
@@ -112,15 +111,11 @@ function toggleAuthMode() {
 
 async function handleAuth(e) {
     e.preventDefault();
-
     const email = document.getElementById('auth-email').value;
     const password = document.getElementById('auth-password').value;
     const name = document.getElementById('auth-name').value;
-
     const endpoint = state.isLoginMode ? '/auth/login' : '/auth/signup';
-    const payload = state.isLoginMode
-        ? { email, password }
-        : { email, password, name };
+    const payload = state.isLoginMode ? { email, password } : { email, password, name };
 
     try {
         elements.authSubmitBtn.disabled = true;
@@ -141,7 +136,7 @@ async function handleAuth(e) {
             toggleAuthMode();
         }
     } catch (err) {
-        // Error handled by apiRequest
+        // handled by apiRequest
     } finally {
         elements.authSubmitBtn.disabled = false;
         elements.authSubmitBtn.innerText = state.isLoginMode ? 'Entrar' : 'Registar';
@@ -167,18 +162,17 @@ function showApp() {
 
 async function initApp() {
     try {
-        // Fetch Budget Summary
         const budgetData = await apiRequest('/auth/budget');
         state.budgetLimit = budgetData.newBudget || budgetData.limit || 0;
         state.user = budgetData.user || { name: 'Usuário' };
 
-        // Fetch Transactions
         const transactions = await apiRequest('/transactions');
         state.transactions = transactions;
+        state.filteredTransactions = [...state.transactions];
 
         updateUI();
     } catch (err) {
-        // Error handled by apiRequest
+        // handled
     } finally {
         elements.loader.classList.add('hidden');
     }
@@ -194,27 +188,45 @@ function updateUI() {
 
     const percent = state.budgetLimit > 0 ? (state.spentAmount / state.budgetLimit) * 100 : 0;
     elements.progressBar.style.width = `${Math.min(percent, 100)}%`;
+    elements.budgetPercent.innerText = `${Math.round(percent)}%`;
 
     renderTransactions();
 }
 
 function renderTransactions() {
-    if (state.transactions.length === 0) {
+    const list = state.filteredTransactions;
+    if (list.length === 0) {
         elements.emptyState.classList.remove('hidden');
         elements.transactionsList.innerHTML = '';
         return;
     }
 
     elements.emptyState.classList.add('hidden');
-    elements.transactionsList.innerHTML = state.transactions.map(tx => `
-        <div class="tx-item">
+    elements.transactionsList.innerHTML = list.map((tx, index) => `
+        <div class="tx-item" style="animation-delay: ${index * 0.05}s">
             <div class="tx-info">
                 <span class="tx-desc">${tx.description}</span>
                 <span class="tx-meta">${tx.category} • ${tx.date || 'Hoje'}</span>
             </div>
-            <div class="tx-amount">-${tx.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })} ${CONFIG.CURRENCY}</div>
+            <div class="tx-right">
+                <span class="tx-amount">-${tx.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })} ${CONFIG.CURRENCY}</span>
+                <button onclick="deleteTransaction('${tx.id}')" class="delete-tx-btn" title="Remover">×</button>
+            </div>
         </div>
     `).join('');
+}
+
+async function deleteTransaction(id) {
+    if (!confirm('Deseja realmente remover este gasto?')) return;
+
+    try {
+        await apiRequest(`/transactions/${id}`, { method: 'DELETE' });
+        state.transactions = state.transactions.filter(t => t.id !== id);
+        state.filteredTransactions = [...state.transactions];
+        updateUI();
+    } catch (err) {
+        // handled
+    }
 }
 
 /**
@@ -236,20 +248,31 @@ elements.expenseForm.onsubmit = async (e) => {
             body: JSON.stringify(payload)
         });
         state.transactions.unshift(newTx);
+        state.filteredTransactions = [...state.transactions];
         updateUI();
         elements.expenseForm.reset();
     } catch (err) {
-        // Error handled by apiRequest
+        // handled
     } finally {
         elements.submitBtn.disabled = false;
         elements.submitBtn.innerText = 'Adicionar Gasto';
     }
 };
 
-// Event Listeners
+elements.searchTx.oninput = (e) => {
+    const term = e.target.value.toLowerCase();
+    state.filteredTransactions = state.transactions.filter(tx =>
+        tx.description.toLowerCase().includes(term) ||
+        tx.category.toLowerCase().includes(term)
+    );
+    renderTransactions();
+};
+
 elements.toggleAuthBtn.onclick = toggleAuthMode;
 elements.authForm.onsubmit = handleAuth;
 elements.logoutBtn.onclick = handleLogout;
+
+window.deleteTransaction = deleteTransaction;
 
 window.addEventListener('DOMContentLoaded', () => {
     if (state.token) {

@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ExpenseTracker | Minimalist</title>
+    <title>ExpenseTracker | Studio</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <!-- Global Loader -->
@@ -31,7 +31,7 @@
             </div>
 
             <form id="auth-form">
-                <div class="input-group" id="name-group" class="hidden">
+                <div class="input-group hidden" id="name-group">
                     <label>Nome Completo</label>
                     <input type="text" id="auth-name" placeholder="Seu nome">
                 </div>
@@ -73,7 +73,10 @@
                 <div class="progress-container">
                     <div id="progress-bar" class="progress-bar"></div>
                 </div>
-                <p class="budget-detail">Limite Mensal: <span id="budget-limit">0,00</span></p>
+                <p class="budget-detail">
+                    <span>Limite Mensal: <strong id="budget-limit">0,00</strong></span>
+                    <span id="budget-percent">0%</span>
+                </p>
             </section>
 
             <!-- Expense Form Card -->
@@ -104,7 +107,13 @@
         </main>
 
         <section class="history-section">
-            <h2>Histórico Recente</h2>
+            <div class="history-header">
+                <h2>Histórico Recente</h2>
+                <div class="search-container">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="search-tx" class="search-input" placeholder="Pesquisar transações...">
+                </div>
+            </div>
             <div id="transactions-list" class="transactions-grid"></div>
             <div id="empty-state" class="empty-state hidden">
                 Nenhuma transação encontrada.

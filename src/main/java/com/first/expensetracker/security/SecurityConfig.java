@@ -7,6 +7,12 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -18,8 +24,8 @@ public class SecurityConfig {
             // 1. Desativar CSRF (necessário para APIs REST)
             .csrf(AbstractHttpConfigurer::disable)
 
-            // 2. Configurar CORS para permitir que o frontend (GitHub Pages) acesse a API
-            .cors(cors -> cors.configure(http))
+            // 2. Configurar CORS
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
             // 3. Definir as regras de acesso
             .authorizeHttpRequests(auth -> auth
@@ -30,11 +36,23 @@ public class SecurityConfig {
             )
 
             // 4. Tornar a sessão STATELESS (Sem estado)
-            // Isso remove a página de login padrão do Spring e impede a criação de cookies de sessão
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             );
 
         return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("*"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(false);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 }

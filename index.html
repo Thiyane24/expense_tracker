@@ -208,10 +208,15 @@
             screens.auth.classList.remove('hidden');
         }
         async function initApp() {
-            updateBudgetUI();
-            await fetchTransactions();
-            ui.globalLoader.classList.add('opacity-0');
-            setTimeout(() => ui.globalLoader.classList.add('hidden'), 500);
+            try {
+                updateBudgetUI();
+                await fetchTransactions();
+            } catch (err) {
+                console.error('Erro na inicialização do app:', err);
+            } finally {
+                ui.globalLoader.classList.add('opacity-0');
+                setTimeout(() => ui.globalLoader.classList.add('hidden'), 500);
+            }
         }
         async function fetchTransactions() {
             try {
@@ -275,6 +280,7 @@
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.token}` },
                     body: JSON.stringify({ amount, description, category })
                 });
+                if (!res.ok) throw new Error('Erro ao salvar transação');
                 const newTx = await res.json();
                 state.transactions.unshift(newTx);
                 calculateTotals();
@@ -288,7 +294,12 @@
                     forms.expense.reset();
                 }, 1500);
             } catch (err) {
-                }
+                console.error('Erro:', err);
+                ui.errorMsg.innerText = 'Erro ao adicionar gasto. Tente novamente.';
+                ui.errorMsg.classList.remove('hidden');
+                ui.btnText.innerText = 'Erro!';
+                ui.submitBtn.disabled = false;
+            }
         }
         window.deleteTransaction = async (id) => {
             try {
@@ -307,7 +318,7 @@
             const amount = document.getElementById('new-budget-amount').value;
             if (!amount) return;
             try {
-                 astronomer = await fetch(`${API_BASE_URL}/auth/budget`, {
+                const res = await fetch(`${API_BASE_URL}/auth/budget`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.token}` },
                     body: JSON.stringify({ amount: amount })

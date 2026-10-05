@@ -53,6 +53,30 @@ public class AuthController {
                 .orElse(ResponseEntity.status(401).body(Map.of("error", "Invalid credentials")));
     }
 
+    @GetMapping("/budget")
+    public ResponseEntity<?> getBudget(@RequestHeader("Authorization") String authHeader) {
+        try {
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return ResponseEntity.status(401).body(Map.of("error", "Missing token"));
+            }
+
+            String token = authHeader.substring(7);
+            UUID userId = jwtTokenUtil.validateTokenAndGetUserId(token);
+
+            if (userId == null) {
+                return ResponseEntity.status(401).body(Map.of("error", "Invalid token"));
+            }
+
+            User user = userService.getUserById(userId);
+            return ResponseEntity.ok(Map.of(
+                "user", Map.of("name", user.getName()),
+                "budget", user.getMonthlyBudget()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @PatchMapping("/budget")
     public ResponseEntity<?> updateBudget(@RequestHeader("Authorization") String authHeader, @RequestParam BigDecimal amount) {
         try {

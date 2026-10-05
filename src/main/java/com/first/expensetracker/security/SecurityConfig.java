@@ -29,9 +29,9 @@ public class SecurityConfig {
 
             // 3. Definir as regras de acesso
             .authorizeHttpRequests(auth -> auth
-                // Liberar rotas de autenticação e a home
-                .requestMatchers("/api/auth/**", "/").permitAll()
-                // Todas as outras rotas exigem autenticação (validado via token no controller)
+                // Liberar rotas de autenticação, home, transações e orçamento para teste
+                .requestMatchers("/api/auth/**", "/api/transactions/**", "/").permitAll()
+                // Todas as outras rotas exigem autenticação
                 .anyRequest().authenticated()
             )
 

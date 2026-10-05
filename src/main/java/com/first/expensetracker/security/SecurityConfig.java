@@ -1,0 +1,40 @@
+package com.first.expensetracker.security;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.SecurityFilterChain;
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+            // 1. Desativar CSRF (necessário para APIs REST)
+            .csrf(AbstractHttpConfigurer::disable)
+
+            // 2. Configurar CORS para permitir que o frontend (GitHub Pages) acesse a API
+            .cors(cors -> cors.configure(http))
+
+            // 3. Definir as regras de acesso
+            .authorizeHttpRequests(auth -> auth
+                // Liberar rotas de autenticação e a home
+                .requestMatchers("/api/auth/**", "/").permitAll()
+                // Todas as outras rotas exigem autenticação (validado via token no controller)
+                .anyRequest().authenticated()
+            )
+
+            // 4. Tornar a sessão STATELESS (Sem estado)
+            // Isso remove a página de login padrão do Spring e impede a criação de cookies de sessão
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            );
+
+        return http.build();
+    }
+}

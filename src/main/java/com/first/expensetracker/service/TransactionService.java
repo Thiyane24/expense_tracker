@@ -26,14 +26,27 @@ public class TransactionService {
 
     @Transactional
     public Map<String, Object> registrarDespesa(Map<String, Object> request) {
-        UUID accountId = UUID.fromString((String) request.get("accountId"));
-        UUID categoryId = UUID.fromString((String) request.get("categoryId"));
-        BigDecimal amount = new BigDecimal(request.get("amount").toString());
+        // 1. Resolver a Conta (Usa a primeira conta encontrada ou cria uma padrão)
+        Account account = accountRepo.findAll().stream().findFirst()
+                .orElseGet(() -> {
+                    Account defaultAcc = new Account();
+                    defaultAcc.setName("Conta Principal");
+                    defaultAcc.setBalance(java.math.BigDecimal.ZERO);
+                    return accountRepo.save(defaultAcc);
+                });
 
-        Account account = accountRepo.findById(accountId)
-                .orElseThrow(() -> new ResourceNotFoundException("Conta não encontrada."));
-        Category category = categoryRepo.findById(categoryId)
-                .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada."));
+        // 2. Resolver a Categoria (Busca por nome ou cria nova)
+        String categoryName = (String) request.get("category");
+        Category category = categoryRepo.findAll().stream()
+                .filter(c -> c.getName().equalsIgnoreCase(categoryName))
+                .findFirst()
+                .orElseGet(() -> {
+                    Category newCat = new Category();
+                    newCat.setName(categoryName);
+                    return categoryRepo.save(newCat);
+                });
+
+        BigDecimal amount = new BigDecimal(request.get("amount").toString());
 
         account.setBalance(account.getBalance().subtract(amount));
         accountRepo.save(account);

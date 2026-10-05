@@ -1,6 +1,6 @@
 /**
  * ExpenseTracker Vanilla JS
- * Architecture: State-driven DOM manipulation
+ * Architecture: State-driven DOM manipulation with JWT Auth
  */
 
 const CONFIG = {
@@ -11,9 +11,11 @@ const CONFIG = {
 // Application State
 const state = {
     user: null,
+    token: localStorage.getItem('token') || null,
     budgetLimit: 0,
     spentAmount: 0,
-    transactions: []
+    transactions: [],
+    isLoginMode: true
 };
 
 // DOM Elements
@@ -28,7 +30,18 @@ const elements = {
     emptyState: document.getElementById('empty-state'),
     expenseForm: document.getElementById('expense-form'),
     userStatus: document.getElementById('user-status'),
-    submitBtn: document.getElementById('submit-btn')
+    submitBtn: document.getElementById('submit-btn'),
+
+    // Auth elements
+    authScreen: document.getElementById('auth-screen'),
+    appScreen: document.getElementById('app-screen'),
+    authForm: document.getElementById('auth-form'),
+    authTitle: document.getElementById('auth-title'),
+    authSubtitle: document.getElementById('auth-subtitle'),
+    authSubmitBtn: document.getElementById('auth-submit-btn'),
+    toggleAuthBtn: document.getElementById('toggle-auth'),
+    nameGroup: document.getElementById('name-group'),
+    logoutBtn: document.getElementById('logout-btn')
 };
 
 /**
@@ -51,17 +64,29 @@ function closeError() {
  */
 async function apiRequest(endpoint, options = {}) {
     const url = `${CONFIG.API_BASE_URL}${endpoint}`;
+
     const headers = {
         'Content-Type': 'application/json',
         ...options.headers
     };
 
+    // Automatically add JWT token if available
+    if (state.token) {
+        headers['Authorization'] = `Bearer ${state.token}`;
+    }
+
     try {
         const response = await fetch(url, { ...options, headers });
+
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
+            if (response.status === 401) {
+                handleLogout();
+                throw new Error('Sessão expirada. Por favor, faça login novamente.');
+            }
             throw new Error(errorData.error || `Erro do servidor: ${response.status}`);
         }
+
         return await response.json();
     } catch (err) {
         const isNetworkError = err instanceof TypeError;
@@ -74,21 +99,86 @@ async function apiRequest(endpoint, options = {}) {
 }
 
 /**
- * Core Logic
+ * Auth Logic
  */
+function toggleAuthMode() {
+    state.isLoginMode = !state.isLoginMode;
+    elements.authTitle.innerText = state.isLoginMode ? 'Entrar' : 'Criar Conta';
+    elements.authSubtitle.innerText = state.isLoginMode ? 'Gestão financeira minimalista' : 'Comece a gerir as suas despesas';
+    elements.authSubmitBtn.innerText = state.isLoginMode ? 'Entrar' : 'Registar';
+    elements.nameGroup.classList.toggle('hidden');
+    elements.toggleAuthBtn.innerText = state.isLoginMode ? 'Não tem conta? Crie uma agora' : 'Já tem conta? Faça login';
+}
+
+async function handleAuth(e) {
+    e.preventDefault();
+
+    const email = document.getElementById('auth-email').value;
+    const password = document.getElementById('auth-password').value;
+    const name = document.getElementById('auth-name').value;
+
+    const endpoint = state.isLoginMode ? '/auth/login' : '/auth/signup';
+    const payload = state.isLoginMode
+        ? { email, password }
+        : { email, password, name };
+
+    try {
+        elements.authSubmitBtn.disabled = true;
+        elements.authSubmitBtn.innerText = 'A processar...';
+
+        const data = await apiRequest(endpoint, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+
+        if (state.isLoginMode) {
+            state.token = data.token;
+            localStorage.setItem('token', data.token);
+            state.user = { id: data.id, email: data.email };
+            showApp();
+        } else {
+            alert('Conta criada com sucesso! Por favor, faça login.');
+            toggleAuthMode();
+        }
+    } catch (err) {
+        // Error handled by apiRequest
+    } finally {
+        elements.authSubmitBtn.disabled = false;
+        elements.authSubmitBtn.innerText = state.isLoginMode ? 'Entrar' : 'Registar';
+    }
+}
+
+function handleLogout() {
+    localStorage.removeItem('token');
+    state.token = null;
+    state.user = null;
+    elements.appScreen.classList.add('hidden');
+    elements.authScreen.classList.remove('hidden');
+}
+
+/**
+ * Core App Logic
+ */
+function showApp() {
+    elements.authScreen.classList.add('hidden');
+    elements.appScreen.classList.remove('hidden');
+    initApp();
+}
+
 async function initApp() {
     try {
-        // CORRECTED: Now calling /auth/budget to match AuthController
+        // Fetch Budget Summary
         const budgetData = await apiRequest('/auth/budget');
         state.budgetLimit = budgetData.newBudget || budgetData.limit || 0;
         state.user = budgetData.user || { name: 'Usuário' };
 
+        // Fetch Transactions
         const transactions = await apiRequest('/transactions');
         state.transactions = transactions;
 
         updateUI();
     } catch (err) {
-        // Error already handled by apiRequest
+        // Error handled by apiRequest
     } finally {
         elements.loader.classList.add('hidden');
     }
@@ -156,4 +246,16 @@ elements.expenseForm.onsubmit = async (e) => {
     }
 };
 
-window.addEventListener('DOMContentLoaded', initApp);
+// Event Listeners
+elements.toggleAuthBtn.onclick = toggleAuthMode;
+elements.authForm.onsubmit = handleAuth;
+elements.logoutBtn.onclick = handleLogout;
+
+window.addEventListener('DOMContentLoaded', () => {
+    if (state.token) {
+        showApp();
+    } else {
+        elements.loader.classList.add('hidden');
+        elements.authScreen.classList.remove('hidden');
+    }
+});

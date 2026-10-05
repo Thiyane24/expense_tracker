@@ -22,10 +22,44 @@
         <button onclick="closeError()">×</button>
     </div>
 
-    <div class="container">
+    <!-- Auth Screen -->
+    <div id="auth-screen" class="overlay">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1 id="auth-title">Entrar</h1>
+                <p id="auth-subtitle">Gestão financeira minimalista</p>
+            </div>
+
+            <form id="auth-form">
+                <div class="input-group" id="name-group" class="hidden">
+                    <label>Nome Completo</label>
+                    <input type="text" id="auth-name" placeholder="Seu nome">
+                </div>
+                <div class="input-group">
+                    <label>E-mail</label>
+                    <input type="email" id="auth-email" placeholder="email@exemplo.com" required>
+                </div>
+                <div class="input-group">
+                    <label>Senha</label>
+                    <input type="password" id="auth-password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" id="auth-submit-btn">Entrar</button>
+            </form>
+
+            <div class="auth-footer">
+                <button id="toggle-auth">Não tem conta? Crie uma agora</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Screen -->
+    <div id="app-screen" class="container hidden">
         <header>
             <h1>ExpenseTracker</h1>
-            <div class="user-status" id="user-status">Carregando perfil...</div>
+            <div class="header-actions">
+                <span class="user-status" id="user-status">...</span>
+                <button id="logout-btn" class="logout-btn">Sair</button>
+            </div>
         </header>
 
         <main class="grid">
@@ -71,9 +105,7 @@
 
         <section class="history-section">
             <h2>Histórico Recente</h2>
-            <div id="transactions-list" class="transactions-grid">
-                <!-- Transactions injected here -->
-            </div>
+            <div id="transactions-list" class="transactions-grid"></div>
             <div id="empty-state" class="empty-state hidden">
                 Nenhuma transação encontrada.
             </div>
